@@ -8,13 +8,20 @@ Bot Telegram untuk screening saham manual, alert sekali pakai, dan screening oto
 .
 ├── bot/
 │   ├── core/
-│   │   └── filters.py
+│   │   ├── engine.py
+│   │   ├── filters.py
+│   │   ├── indicators.py
+│   │   ├── market_data.py
+│   │   └── tickers.py
 │   ├── handlers/
 │   │   ├── alert.py
 │   │   ├── algo.py
 │   │   └── screening.py
 │   ├── config.py
 │   └── main.py
+│   └── telegram_bot.py
+├── data/
+│   └── bei_tickers.txt
 └── .env.example
 ```
 
@@ -32,6 +39,15 @@ Isi `.env`:
 
 ```
 TELEGRAM_BOT_TOKEN=isi_token_telegram
+BEI_TICKERS_FILE=data/bei_tickers.txt
+POLL_INTERVAL_SECONDS=15
+YFINANCE_SUFFIX=.JK
+```
+
+Instal dependensi:
+
+```bash
+pip install python-telegram-bot yfinance pandas
 ```
 
 ## Menjalankan
@@ -42,13 +58,15 @@ Mode CLI demo (untuk cek dispatcher):
 python -m bot.main "/scr price < 1000 + rsi < 30 title saham murah oversold"
 ```
 
-Jika tanpa argumen, bot akan menampilkan daftar command yang tersedia.
+Jika `TELEGRAM_BOT_TOKEN` tersedia, bot akan langsung menjalankan Telegram polling.
+Jika tanpa argumen dan tanpa token, bot akan menampilkan daftar command yang tersedia.
 
 ## Command
 
 ### `/scr` (Screening Manual)
 - Manual sekali jalan, hasil statis.
 - Cocok dipakai malam hari atau sebelum bursa buka untuk nyiapin watchlist.
+- Realtime: screening semua ticker BEI.
 
 Contoh:
 ```
@@ -58,6 +76,7 @@ Contoh:
 ### `/alert` (Alarm Sekali Pakai)
 - Bot memantau otomatis selama jam bursa.
 - Sekali tembak: notif dikirim saat kondisi terpenuhi lalu selesai.
+- Realtime: memantau semua ticker BEI.
 
 Contoh:
 ```
@@ -67,6 +86,10 @@ Contoh:
 ### `/algo` (Screening Otomatis & Berulang)
 - Bot memantau otomatis sepanjang jam bursa.
 - Berulang: tiap saham masuk kriteria → notif dikirim.
+- Realtime: memantau semua ticker BEI.
+
+### `/stop`
+- Menghentikan alert/algo yang sedang aktif.
 
 Contoh:
 ```
@@ -85,3 +108,10 @@ vol > ma20vol
 ```
 
 Parser ada di `bot/core/filters.py` dan mendukung operator `<`, `<=`, `>`, `>=`, `=`, `==`.
+
+## Data Ticker BEI
+
+Daftar ticker BEI dibaca dari `data/bei_tickers.txt` atau endpoint publik yang diset lewat
+`BEI_TICKERS_URL` (support `txt`, `csv`, `json`). Format file: satu ticker per baris
+dan harus berisi seluruh kode saham BEI agar realtime screening mencakup semuanya.
+Bot mengambil data intraday (interval 1 menit) via `yfinance` untuk kebutuhan realtime.
