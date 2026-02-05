@@ -1,0 +1,6 @@
+# Isi file ini dengan satu ticker BEI per baris.
+# Contoh:
+# BBRI
+# BBCA
+# BMRI
+# TLKM

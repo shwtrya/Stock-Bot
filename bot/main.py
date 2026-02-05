@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import sys
 from typing import Callable, Dict
 
@@ -9,6 +10,7 @@ from bot.config import load_settings
 from bot.handlers.alert import handle_alert
 from bot.handlers.algo import handle_algo
 from bot.handlers.screening import handle_scr
+from bot.telegram_bot import build_bot
 
 
 CommandHandler = Callable[[], str]
@@ -28,7 +30,8 @@ def render_help() -> str:
         "Perintah tersedia:\n"
         "- /scr   → screening manual\n"
         "- /alert → alarm sekali pakai\n"
-        "- /algo  → screening otomatis & berulang\n\n"
+        "- /algo  → screening otomatis & berulang\n"
+        "- /stop  → hentikan alert/algo\n\n"
         "Contoh:\n"
         "python -m bot.main \"/scr price < 1000 + rsi < 30 title saham murah oversold\""
     )
@@ -55,6 +58,11 @@ def run_cli(argv: list[str]) -> int:
 
 
 def main() -> None:
+    settings = load_settings()
+    if settings.telegram_bot_token:
+        bot = build_bot(settings)
+        asyncio.run(bot.start())
+        return
     raise SystemExit(run_cli(sys.argv))
 
 
